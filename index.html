@@ -459,7 +459,16 @@ html, body { height: 100%; font-family: var(--font); background: var(--bg); colo
 .btn-dashboard:hover { background: var(--purple); }
 .restart-link { margin-top: 12px; background: none; border: none; cursor: pointer; color: var(--purple-link); font-size: 13px; font-family: var(--font); text-decoration: underline; }
 
-/* ═══ SCANNING ANIMATION ═══ */
+/* Create flow — hide passkey CTA area */
+.hide-passkey-cta #passkeyCtaArea { display: none; }
+.hide-passkey-cta .or-divider-top { display: none; }
+
+/* Password field toggle */
+.pw-toggle { background: none; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+
+/* Passkey created check animation */
+@keyframes drawCheck { to { stroke-dashoffset: 0; } }
+
 .fp-scan-wrap { position: relative; width: 64px; height: 64px; margin: 0 auto; }
 .fp-scan-wrap svg { position: absolute; inset: 0; }
 .fp-track { fill: none; stroke: rgba(255,255,255,0.15); stroke-width: 3; }
@@ -538,23 +547,46 @@ html, body { height: 100%; font-family: var(--font); background: var(--bg); colo
     <!-- Step indicator -->
     <div class="step-bar" id="stepBar"></div>
 
+    <!-- Info banner (shown during create flow steps 2-3) -->
+    <div id="createInfoBanner" style="display:none;margin-bottom:18px">
+      <div style="display:flex;align-items:flex-start;gap:10px;background:#eef4ff;border-left:3px solid #3D1A6E;border-radius:4px;padding:11px 13px;position:relative">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0;margin-top:1px"><circle cx="8" cy="8" r="7" fill="#3D1A6E"/><path d="M8 7v4M8 5.5v.5" stroke="white" stroke-width="1.4" stroke-linecap="round"/></svg>
+        <div style="font-size:13px;color:#333;line-height:1.5">Please sign in with your username and password to create a passkey.</div>
+        <button onclick="cancelCreateFlow()" style="background:none;border:none;cursor:pointer;color:#888;font-size:18px;line-height:1;padding:0;margin-top:-1px;flex-shrink:0">×</button>
+      </div>
+    </div>
+
     <h1 class="signin-title">Sign in</h1>
     <p class="new-account-row">New to Pearson? <a href="#">Create an account</a></p>
 
-    <!-- Passkey CTA -->
+    <!-- Passkey CTA (hidden during create flow steps 2-3) -->
+    <div id="passkeyCtaArea">
     <button class="btn-passkey-cta" id="passkeyCtaBtn" onclick="handlePasskeyCta()">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="4.5" stroke="white" stroke-width="2"/><path d="M2 20c0-3.3 3.1-6 7-6" stroke="white" stroke-width="2" stroke-linecap="round"/><path d="M17 14l1.5 1.5L21 13" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="18" cy="17" r="3.5" stroke="white" stroke-width="2"/></svg>
       Create or Sign in with Passkey
     </button>
     <p class="passkey-desc">Sign in or create a passkey using your fingerprint, Face ID, or device PIN – fast and password-free.</p>
     <button class="manage-link" onclick="openManagePasskeys()">Manage Passkeys</button>
+    </div><!-- /passkeyCtaArea -->
 
-    <div class="or-divider">or</div>
+    <div class="or-divider or-divider-top">or</div>
 
     <div style="margin-bottom:14px">
       <label class="form-label">Username</label>
       <input class="form-input" id="usernameInput" type="text" placeholder="Enter your username"
         oninput="handleUsernameInput(this.value)">
+    </div>
+
+    <!-- Password field (shown in create flow step 3) -->
+    <div id="createPasswordGroup" style="display:none;margin-bottom:14px">
+      <label class="form-label">Password</label>
+      <div class="pw-wrap">
+        <input class="form-input" id="passwordInput" type="password" placeholder="Enter your password"
+          oninput="handlePasswordInput(this.value)">
+        <button class="pw-toggle" tabindex="-1" onclick="togglePw()">
+          <svg id="pwEyeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/><line x1="3" y1="3" x2="21" y2="21"/></svg>
+        </button>
+      </div>
     </div>
 
     <div class="remember-row">
@@ -563,7 +595,7 @@ html, body { height: 100%; font-family: var(--font); background: var(--bg); colo
     </div>
 
     <button class="btn-next" id="nextBtn" onclick="handleNext()">
-      Next <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 3l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span id="nextBtnLabel">Next</span> <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 3l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </button>
 
     <button class="help-signin">
@@ -903,6 +935,180 @@ html, body { height: 100%; font-family: var(--font); background: var(--bg); colo
   </div>
 </div>
 
+<!-- ════════════════════════════════════════════
+     CREATE FLOW: Step 1 — Info banner (sign in first)
+     Background: checkerboard, form shows, no passkey CTA
+════════════════════════════════════════════ -->
+<div class="modal-overlay" id="createStep1Modal" style="align-items:flex-start;justify-content:flex-start;padding:0">
+  <!-- This uses a full-page takeover: we hide the normal form and show this state inline -->
+</div>
+
+<!-- ════════════════════════════════════════════
+     MODAL: Set up Passkey (full dark bg card)
+════════════════════════════════════════════ -->
+<div class="modal-overlay" id="setupPasskeyModal" style="background:#0D0B4E">
+  <div class="pearson-modal" style="max-width:320px;padding:32px 28px 28px;text-align:center">
+    <div style="margin-bottom:14px">
+      <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
+        <circle cx="22" cy="18" r="10" fill="#3D1A6E"/>
+        <path d="M5 44c0-8 7.6-14 17-14" stroke="#3D1A6E" stroke-width="2.5" stroke-linecap="round"/>
+        <circle cx="40" cy="38" r="7.5" stroke="#3D1A6E" stroke-width="2.5"/>
+        <path d="M37 38l2.5 2.5L44.5 34" stroke="#3D1A6E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <h2 class="modal-title" style="display:flex;align-items:center;justify-content:center;gap:6px">
+      Set up Passkey
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="#888" stroke-width="1.4"/><path d="M8 7v4M8 5.5v.5" stroke="#888" stroke-width="1.4" stroke-linecap="round"/></svg>
+    </h2>
+    <p class="modal-sub">Enable faster, more secure access to your account using a passkey.</p>
+
+    <!-- Method list -->
+    <div style="text-align:left;margin-bottom:22px">
+      <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid #eee">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;margin-top:2px">
+          <path d="M12 3C8 3 5 6.1 5 10c0 5 4.5 9.5 7 11.5 2.5-2 7-6.5 7-11.5C19 6.1 16 3 12 3z" stroke="#3D1A6E" stroke-width="1.8"/>
+          <path d="M12 7c-1.6 0-3 1.4-3 3 0 1.1.6 2 1.5 2.6" stroke="#3D1A6E" stroke-width="1.8" stroke-linecap="round"/>
+          <circle cx="12" cy="10" r="1.5" fill="#3D1A6E"/>
+        </svg>
+        <div>
+          <div style="font-size:14px;font-weight:600;color:var(--text)">Fingerprint</div>
+          <div style="font-size:12.5px;color:var(--text-mid)">Use your device's fingerprint scanner</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid #eee">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;margin-top:2px">
+          <rect x="3" y="3" width="18" height="18" rx="3" stroke="#3D1A6E" stroke-width="1.8"/>
+          <path d="M9 9h2v2H9zM13 9h2v2h-2zM9 13h2v2H9zM13 13h2v2h-2z" fill="#3D1A6E"/>
+        </svg>
+        <div>
+          <div style="font-size:14px;font-weight:600;color:var(--text)">Device PIN</div>
+          <div style="font-size:12.5px;color:var(--text-mid)">Use your screen lock code</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 0">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;margin-top:2px">
+          <rect x="5" y="3" width="14" height="18" rx="3" stroke="#3D1A6E" stroke-width="1.8"/>
+          <circle cx="12" cy="10" r="3" stroke="#3D1A6E" stroke-width="1.8"/>
+          <path d="M8 17c0-2.2 1.8-4 4-4s4 1.8 4 4" stroke="#3D1A6E" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+        <div>
+          <div style="font-size:14px;font-weight:600;color:var(--text)">Face ID</div>
+          <div style="font-size:12.5px;color:var(--text-mid)">Quick access with facial recognition</div>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-passkey-cta" style="margin-bottom:10px" onclick="handleCreatePasskeyClick()">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="4.5" stroke="white" stroke-width="2"/><path d="M2 20c0-3.3 3.1-6 7-6" stroke="white" stroke-width="2" stroke-linecap="round"/><circle cx="19" cy="17" r="3.5" stroke="white" stroke-width="2"/><path d="M16 17l2 2 3-3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Create a Passkey
+    </button>
+    <p style="font-size:11.5px;color:var(--text-mid);margin-bottom:14px;line-height:1.5">We value your privacy. Your biometric or PIN data is never stored on our servers.</p>
+    <button class="diff-method" onclick="skipPasskeySetup()">Skip for now</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     MODAL: Google — Create passkey (dark)
+════════════════════════════════════════════ -->
+<div class="modal-overlay" id="googleCreateModal" style="background:rgba(0,0,0,0.7)">
+  <div class="google-modal" style="width:480px;max-width:95vw">
+    <!-- Illustrated header -->
+    <div style="background:#2a2d30;padding:28px 24px 20px;text-align:center;position:relative">
+      <!-- Decorative dots -->
+      <div style="position:absolute;top:16px;left:20px;display:flex;gap:5px">
+        <div style="width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,0.2)"></div>
+        <div style="width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,0.2)"></div>
+        <div style="width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,0.2)"></div>
+        <div style="width:8px;height:5px;border-radius:3px;background:rgba(255,255,255,0.2)"></div>
+      </div>
+      <div style="position:absolute;top:16px;right:20px;display:flex;gap:5px">
+        <div style="width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,0.2)"></div>
+        <div style="width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,0.2)"></div>
+        <div style="width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,0.2)"></div>
+      </div>
+      <!-- Central icon: Google + fingerprint blob -->
+      <div style="position:relative;width:80px;height:80px;margin:0 auto">
+        <div style="width:80px;height:80px;border-radius:50%;background:radial-gradient(circle,#3d4043 0%,#2a2d30 100%);display:flex;align-items:center;justify-content:center;position:relative">
+          <!-- Fingerprint arc background -->
+          <svg width="70" height="70" viewBox="0 0 70 70" style="position:absolute;top:5px;left:5px;opacity:0.4">
+            <path d="M35 10c-14 0-25 11-25 25" stroke="rgba(138,180,248,0.6)" stroke-width="1.5" fill="none" stroke-dasharray="3 3"/>
+            <path d="M35 16c-10.5 0-19 8.5-19 19" stroke="rgba(138,180,248,0.4)" stroke-width="1.5" fill="none" stroke-dasharray="3 3"/>
+          </svg>
+          <!-- Google G -->
+          <svg width="34" height="34" viewBox="0 0 24 24">
+            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+          </svg>
+          <!-- Key badge -->
+          <div style="position:absolute;bottom:-4px;right:-4px;width:22px;height:22px;border-radius:50%;background:#fbbc05;display:flex;align-items:center;justify-content:center">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><circle cx="6" cy="7" r="3.5" stroke="#333" stroke-width="1.5"/><path d="M9 7h6M13 5.5v3" stroke="#333" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Body -->
+    <div style="padding:20px 24px">
+      <h3 style="font-size:15px;font-weight:500;color:#e8eaed;margin-bottom:10px;line-height:1.4">Create a passkey to sign in to <strong>iam-stage.pearson.com</strong>?</h3>
+      <p style="font-size:13px;color:#9aa0a6;margin-bottom:16px;line-height:1.5">You can use this passkey to sign in faster across your devices. It will be saved to Google Password Manager for <span style="color:#8ab4f8">derek.smith@gmail.com</span>.</p>
+
+      <!-- User chip -->
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:#2d2f31;border-radius:8px;margin-bottom:20px">
+        <div style="width:32px;height:32px;border-radius:50%;background:#3c4043;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="#9aa0a6" stroke-width="1.5"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="#9aa0a6" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </div>
+        <div>
+          <div style="font-size:13.5px;font-weight:500;color:#e8eaed">Derek Smith</div>
+          <div style="font-size:12px;color:#9aa0a6">Passkey</div>
+        </div>
+      </div>
+
+      <div class="google-divider" style="margin:0 -24px 16px"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <button class="google-btn" style="background:#2d2f31;color:#8ab4f8;border:1px solid #5f6368;border-radius:20px;padding:8px 18px" onclick="closeModal('googleCreateModal');showModal('setupPasskeyModal')">Save another way</button>
+        <div style="display:flex;gap:8px">
+          <button class="google-btn google-btn-cancel" onclick="closeModal('googleCreateModal');showModal('setupPasskeyModal')">Cancel</button>
+          <button class="google-btn google-btn-confirm" style="border-radius:20px" onclick="completeGoogleCreate()">Create</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     MODAL: Passkey Created! (white card, dark bg)
+════════════════════════════════════════════ -->
+<div class="modal-overlay" id="passkeyCreatedModal" style="background:#0D0B4E">
+  <div class="pearson-modal" style="max-width:320px;padding:32px 28px 28px;text-align:center">
+    <!-- Green check -->
+    <svg width="52" height="52" viewBox="0 0 52 52" style="display:block;margin:0 auto 14px">
+      <circle cx="26" cy="26" r="26" fill="#1a7340"/>
+      <path d="M14 26l9 9 15-15" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke-dasharray="40" stroke-dashoffset="40" style="animation:drawCheck 0.5s 0.15s ease forwards"/>
+    </svg>
+    <h2 class="modal-title" style="margin-bottom:16px">Passkey Created!</h2>
+
+    <!-- Info banner -->
+    <div style="display:flex;align-items:flex-start;gap:10px;background:#eef4ff;border-left:3px solid #3D1A6E;border-radius:4px;padding:11px 13px;margin-bottom:20px;text-align:left">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0;margin-top:1px"><circle cx="8" cy="8" r="7" fill="#3D1A6E"/><path d="M8 7v4M8 5.5v.5" stroke="white" stroke-width="1.4" stroke-linecap="round"/></svg>
+      <div style="font-size:12.5px;color:#333;line-height:1.5;flex:1">We've suggested a name – edit it to make it easier to recognize later.</div>
+      <button onclick="this.closest('div').style.display='none'" style="background:none;border:none;cursor:pointer;color:#888;font-size:16px;line-height:1;flex-shrink:0;padding:0;margin-top:-1px">×</button>
+    </div>
+
+    <!-- Passkey name field -->
+    <div style="text-align:left;margin-bottom:20px">
+      <label class="form-label" style="margin-bottom:6px">Passkey Name</label>
+      <input class="form-input" id="passkeyNameInput" type="text" value="Chrome on iOS" style="border-color:#3D1A6E">
+    </div>
+
+    <button class="btn-passkey-cta" onclick="finishPasskeyCreation()" style="border-radius:100px">
+      Continue
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 3l4 4-4 4" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+  </div>
+</div>
+
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
@@ -913,16 +1119,17 @@ html, body { height: 100%; font-family: var(--font); background: var(--bg); colo
 var scenario = 'new';
 var selectedOption = null;
 var stepIndex = 0;
+var createFlowStep = 0; // 0=off, 1=username-only, 2=username+password, 3=setup, 4=google-create, 5=created
 
 var scenarioLabels = {
   new:       ['Enter username', 'Choose method', 'Biometric auth', 'Signed in'],
   returning: ['Passkey prompt', 'Signed in'],
   icloud:    ['iCloud auth', 'Signed in'],
   google:    ['Google auth', 'Signed in'],
-  manage:    ['Manage passkeys']
+  manage:    ['Manage passkeys'],
+  create:    ['Choose method', 'Sign in', 'Enter password', 'Set up passkey', 'Confirm', 'Passkey created']
 };
 
-// Resolve email data-attributes on page load (avoids Cloudflare obfuscation)
 function resolveEmails() {
   document.querySelectorAll('[data-em][data-dom]').forEach(function(el) {
     el.textContent = el.getAttribute('data-em') + '@' + el.getAttribute('data-dom');
@@ -936,11 +1143,13 @@ window.setScenario = function(sc) {
   scenario = sc;
   stepIndex = 0;
   selectedOption = null;
+  createFlowStep = 0;
   document.querySelectorAll('.sc-btn').forEach(function(b) {
     b.classList.toggle('active', b.getAttribute('data-sc') === sc);
   });
   resetUI();
   renderStepBar();
+
   if (sc === 'returning') {
     document.getElementById('pageBody').classList.add('dimmed');
     setTimeout(function(){ openPasskeyChoice(true); }, 300);
@@ -958,10 +1167,13 @@ window.setScenario = function(sc) {
 
 function resetUI() {
   closeAllModals();
+  createFlowStep = 0;
   document.getElementById('pageBody').classList.remove('dimmed');
   document.getElementById('usernameInput').value = '';
+  document.getElementById('passwordInput').value = '';
   document.getElementById('nextBtn').classList.remove('active');
   document.getElementById('usernameInput').classList.remove('has-value');
+  document.getElementById('nextBtnLabel').textContent = 'Next';
   selectedOption = null;
   document.getElementById('continueBtn').classList.remove('active');
   document.querySelectorAll('.radio-option').forEach(function(o){ o.classList.remove('selected'); });
@@ -970,6 +1182,11 @@ function resetUI() {
   document.getElementById('googleFpArea').style.display = 'none';
   document.getElementById('googleConfirmBtn').style.display = 'none';
   document.getElementById('winFpArea').innerHTML = getFpHTML();
+  // Hide create-flow elements
+  document.getElementById('createInfoBanner').style.display = 'none';
+  document.getElementById('createPasswordGroup').style.display = 'none';
+  document.getElementById('passkeyCtaArea').style.display = 'block';
+  document.querySelector('.or-divider-top').style.display = 'flex';
 }
 
 function renderStepBar() {
@@ -978,24 +1195,20 @@ function renderStepBar() {
   bar.innerHTML = labels.map(function(l, i) {
     var done = i < stepIndex, active = i === stepIndex;
     var cls = done ? 'done' : (active ? 'active' : '');
-    var click = i <= stepIndex ? 'onclick="jumpStep(' + i + ')"' : '';
-    var dot = '<div class="sdot ' + cls + '" ' + click + '><span>' + (i+1) + '</span></div>';
+    var dot = '<div class="sdot ' + cls + '" title="' + l + '"><span>' + (i+1) + '</span></div>';
     var line = i < labels.length - 1 ? '<div class="sline ' + (done ? 'done' : '') + '"></div>' : '';
     return dot + line;
   }).join('');
 }
 
-function advanceStep() {
-  stepIndex++;
-  renderStepBar();
-}
+function advanceStep() { stepIndex++; renderStepBar(); }
 
 window.jumpStep = function(i) {
   if (i <= stepIndex) { stepIndex = i; renderStepBar(); }
 };
 
 // ══════════════════════════════════════════════
-//  USERNAME INPUT & NEXT
+//  USERNAME / PASSWORD INPUT
 // ══════════════════════════════════════════════
 window.handleUsernameInput = function(val) {
   var btn = document.getElementById('nextBtn');
@@ -1009,7 +1222,42 @@ window.handleUsernameInput = function(val) {
   }
 };
 
+window.handlePasswordInput = function(val) {
+  // If in create flow step 2, activate next on any input
+  if (createFlowStep === 2) {
+    var btn = document.getElementById('nextBtn');
+    if (val.trim().length > 0) btn.classList.add('active');
+    else btn.classList.remove('active');
+  }
+};
+
+window.togglePw = function() {
+  var inp = document.getElementById('passwordInput');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+};
+
 window.handleNext = function() {
+  if (createFlowStep === 1) {
+    // Username entered in create flow — show password field
+    var val = document.getElementById('usernameInput').value.trim();
+    if (!val) return;
+    createFlowStep = 2;
+    advanceStep();
+    document.getElementById('createPasswordGroup').style.display = 'block';
+    document.getElementById('nextBtnLabel').textContent = 'Sign in';
+    document.getElementById('nextBtn').classList.remove('active');
+    return;
+  }
+  if (createFlowStep === 2) {
+    // Username + password entered — proceed to Set up Passkey
+    createFlowStep = 3;
+    advanceStep();
+    document.getElementById('pageBody').classList.add('dimmed');
+    closeAllModals();
+    setTimeout(function(){ showModal('setupPasskeyModal'); }, 200);
+    return;
+  }
+  // Normal flow
   var val = document.getElementById('usernameInput').value.trim();
   if (!val) return;
   advanceStep();
@@ -1029,50 +1277,106 @@ function openPasskeyChoice(preSelectSignin) {
   if (preSelectSignin) { selectOption('signin'); }
   showModal('passkeyChoiceModal');
 }
-
 window.openPasskeyChoice = openPasskeyChoice;
 
 // ══════════════════════════════════════════════
 //  RADIO OPTIONS
 // ══════════════════════════════════════════════
-window.selectOption = function(opt) {
+function selectOption(opt) {
   selectedOption = opt;
   document.getElementById('opt-signin').classList.toggle('selected', opt === 'signin');
   document.getElementById('opt-create').classList.toggle('selected', opt === 'create');
   document.getElementById('r-signin').checked = opt === 'signin';
   document.getElementById('r-create').checked = opt === 'create';
   document.getElementById('continueBtn').classList.add('active');
-};
-
-function selectOption(opt) {
-  window.selectOption(opt);
 }
+window.selectOption = selectOption;
 
 window.handleContinue = function() {
   if (!selectedOption) return;
   closeModal('passkeyChoiceModal');
   advanceStep();
+
+  if (selectedOption === 'create') {
+    // ── CREATE NEW PASSKEY FLOW ──────────────────
+    // Switch scenario labels to create flow
+    scenario = 'create';
+    stepIndex = 1;
+    renderStepBar();
+    createFlowStep = 1;
+    // Hide passkey CTA, show info banner, hide password
+    document.getElementById('passkeyCtaArea').style.display = 'none';
+    document.querySelector('.or-divider-top').style.display = 'none';
+    document.getElementById('createInfoBanner').style.display = 'block';
+    document.getElementById('createPasswordGroup').style.display = 'none';
+    document.getElementById('usernameInput').value = 'derek.smith';
+    document.getElementById('usernameInput').classList.add('has-value');
+    document.getElementById('nextBtnLabel').textContent = 'Next';
+    document.getElementById('nextBtn').classList.add('active');
+    document.getElementById('pageBody').classList.remove('dimmed');
+    return;
+  }
+
+  // ── SIGN IN WITH PASSKEY ─────────────────────
   var uname = document.getElementById('usernameInput').value || 'Derek Smith';
-  if (selectedOption === 'signin') {
-    setTimeout(function() {
-      if (scenario === 'icloud') {
-        showModal('icloudModal');
-      } else if (scenario === 'google') {
-        showModal('googleModal');
-      } else {
-        document.getElementById('winUsername').textContent = uname;
-        showModal('windowsModal');
-        simulateFingerprint();
-      }
-    }, 200);
-  } else {
-    // Create new passkey
-    document.getElementById('winUsername').textContent = uname;
-    setTimeout(function() {
+  setTimeout(function() {
+    if (scenario === 'icloud') {
+      showModal('icloudModal');
+    } else if (scenario === 'google') {
+      showModal('googleModal');
+    } else {
+      document.getElementById('winUsername').textContent = uname;
       showModal('windowsModal');
       simulateFingerprint();
-    }, 200);
-  }
+    }
+  }, 200);
+};
+
+window.cancelCreateFlow = function() {
+  createFlowStep = 0;
+  scenario = 'new';
+  stepIndex = 0;
+  resetUI();
+  renderStepBar();
+};
+
+// ══════════════════════════════════════════════
+//  CREATE FLOW: Set up Passkey → Google Create
+// ══════════════════════════════════════════════
+window.handleCreatePasskeyClick = function() {
+  createFlowStep = 4;
+  advanceStep();
+  closeModal('setupPasskeyModal');
+  setTimeout(function(){ showModal('googleCreateModal'); }, 200);
+};
+
+window.skipPasskeySetup = function() {
+  // Skip — go straight to signed-in success
+  createFlowStep = 0;
+  closeModal('setupPasskeyModal');
+  completeAuth('windows');
+};
+
+window.completeGoogleCreate = function() {
+  createFlowStep = 5;
+  advanceStep();
+  closeModal('googleCreateModal');
+  setTimeout(function(){
+    document.getElementById('passkeyNameInput').value = 'Chrome on iOS';
+    showModal('passkeyCreatedModal');
+  }, 200);
+};
+
+window.finishPasskeyCreation = function() {
+  var name = document.getElementById('passkeyNameInput').value || 'Chrome on iOS';
+  closeModal('passkeyCreatedModal');
+  advanceStep();
+  createFlowStep = 0;
+  // Go to success
+  document.getElementById('successMsg').textContent = 'Your passkey "' + name + '" has been created. Sign in instantly next time — no password needed.';
+  document.getElementById('successBadgeText').textContent = 'Passkey saved to Google Password Manager · Saved as "' + name + '"';
+  document.getElementById('successEmail').textContent = 'derek.smith@gmail.com';
+  setTimeout(function(){ showModal('successModal'); }, 200);
 };
 
 // ══════════════════════════════════════════════
@@ -1121,7 +1425,7 @@ window.completeIcloud = function() {
 };
 
 // ══════════════════════════════════════════════
-//  GOOGLE
+//  GOOGLE SIGN-IN
 // ══════════════════════════════════════════════
 window.selectGoogleAccount = function(el) {
   document.getElementById('googleAccountList').style.display = 'none';
@@ -1139,7 +1443,7 @@ window.confirmGoogle = function() {
 };
 
 // ══════════════════════════════════════════════
-//  COMPLETE AUTH → SUCCESS
+//  COMPLETE AUTH
 // ══════════════════════════════════════════════
 function completeAuth(method) {
   advanceStep();
@@ -1191,18 +1495,13 @@ window.deletePasskey = function(id, name) {
 function showModal(id) {
   document.getElementById(id).classList.add('visible');
 }
-
 window.closeModal = function(id) {
   document.getElementById(id).classList.remove('visible');
-  if (!anyModalOpen()) {
-    document.getElementById('pageBody').classList.remove('dimmed');
-  }
+  if (!anyModalOpen()) document.getElementById('pageBody').classList.remove('dimmed');
 };
-
 function closeAllModals() {
   document.querySelectorAll('.modal-overlay').forEach(function(m){ m.classList.remove('visible'); });
 }
-
 function anyModalOpen() {
   return Array.from(document.querySelectorAll('.modal-overlay')).some(function(m){ return m.classList.contains('visible'); });
 }
@@ -1221,23 +1520,15 @@ function showToast(msg) {
 //  RESTART
 // ══════════════════════════════════════════════
 window.restart = function() {
+  scenario = 'new';
   stepIndex = 0;
   selectedOption = null;
+  createFlowStep = 0;
   closeAllModals();
-  document.getElementById('pageBody').classList.remove('dimmed');
-  document.getElementById('usernameInput').value = '';
-  document.getElementById('nextBtn').classList.remove('active');
-  document.getElementById('usernameInput').classList.remove('has-value');
-  document.getElementById('continueBtn').classList.remove('active');
-  document.querySelectorAll('.radio-option').forEach(function(o){ o.classList.remove('selected'); });
-  document.querySelectorAll('input[type=radio]').forEach(function(r){ r.checked = false; });
-  document.getElementById('googleAccountList').style.display = 'block';
-  document.getElementById('googleFpArea').style.display = 'none';
-  document.getElementById('googleConfirmBtn').style.display = 'none';
-  document.getElementById('winFpArea').innerHTML = getFpHTML();
+  resetUI();
   renderStepBar();
   document.querySelectorAll('.sc-btn').forEach(function(b){
-    b.classList.toggle('active', b.getAttribute('data-sc') === scenario);
+    b.classList.toggle('active', b.getAttribute('data-sc') === 'new');
   });
 };
 
@@ -1248,9 +1539,7 @@ document.querySelectorAll('.modal-overlay').forEach(function(overlay) {
   overlay.addEventListener('click', function(e) {
     if (e.target === overlay) {
       overlay.classList.remove('visible');
-      if (!anyModalOpen()) {
-        document.getElementById('pageBody').classList.remove('dimmed');
-      }
+      if (!anyModalOpen()) document.getElementById('pageBody').classList.remove('dimmed');
     }
   });
 });
