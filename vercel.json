@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "pearson-passkey-prototype",
+  "builds": [
+    { "src": "index.html", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/(.*)", "dest": "/index.html" }
+  ]
+}

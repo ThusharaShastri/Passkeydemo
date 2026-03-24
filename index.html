@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign in | Pearson – Passkey Prototype</title>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy: #0D0B4E;
+  --navy-mid: #1a1660;
+  --purple: #3D1A6E;
+  --purple-btn: #4A2080;
+  --purple-link: #3D1A6E;
+  --purple-light: #f0ebf8;
+  --border: #c8c8d0;
+  --text: #1a1a2e;
+  --text-mid: #555;
+  --text-light: #888;
+  --bg: #ffffff;
+  --input-bg: #ffffff;
+  --disabled-bg: #e0dde8;
+  --disabled-text: #9990b0;
+  --red: #cc0000;
+  --green: #1a7340;
+  --font: 'Open Sans', -apple-system, sans-serif;
+  --radius-btn: 100px;
+  --radius-input: 6px;
+  --radius-modal: 12px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; font-family: var(--font); background: var(--bg); color: var(--text); font-size: 14px; }
+
+/* ═══ SCENARIO SWITCHER BAR ═══ */
+.scenario-bar {
+  background: #1e1b5e;
+  padding: 8px 20px;
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.scenario-bar span { color: rgba(255,255,255,0.5); font-size: 11px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; margin-right: 4px; }
+.sc-btn {
+  padding: 5px 13px; border-radius: 20px;
+  border: 1.5px solid rgba(255,255,255,0.3);
+  background: transparent; color: rgba(255,255,255,0.7);
+  font-size: 11px; font-weight: 600; font-family: var(--font);
+  cursor: pointer; transition: all 0.18s; white-space: nowrap;
+}
+.sc-btn:hover { background: rgba(255,255,255,0.12); color: white; }
+.sc-btn.active { background: white; color: var(--navy); border-color: white; }
+
+/* ═══ HEADER ═══ */
+.site-header {
+  background: var(--navy);
+  height: 52px; padding: 0 24px;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0;
+}
+.pearson-logo { display: flex; align-items: center; gap: 7px; text-decoration: none; }
+.logo-text { font-size: 18px; font-weight: 700; color: white; letter-spacing: -0.2px; }
+.header-right { display: flex; align-items: center; gap: 16px; }
+.lang-btn {
+  color: rgba(255,255,255,0.85); font-size: 13px; font-weight: 500;
+  background: none; border: none; cursor: pointer; font-family: var(--font);
+  display: flex; align-items: center; gap: 4px;
+}
+.help-btn {
+  width: 28px; height: 28px; border-radius: 50%;
+  border: 1.5px solid rgba(255,255,255,0.5);
+  color: rgba(255,255,255,0.85); font-size: 14px; font-weight: 600;
+  background: none; cursor: pointer; font-family: var(--font);
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ═══ PAGE BODY ═══ */
+.page-body {
+  min-height: calc(100vh - 52px - 38px - 44px);
+  padding: 48px 24px 40px;
+  position: relative;
+}
+
+/* Checkerboard bg - matches Figma */
+.page-body.dimmed::before {
+  content: '';
+  position: fixed; inset: 0; top: 90px;
+  background-image:
+    linear-gradient(45deg, rgba(100,90,160,0.18) 25%, transparent 25%),
+    linear-gradient(-45deg, rgba(100,90,160,0.18) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, rgba(100,90,160,0.18) 75%),
+    linear-gradient(-45deg, transparent 75%, rgba(100,90,160,0.18) 75%);
+  background-size: 32px 32px;
+  background-position: 0 0, 0 16px, 16px -16px, -16px 0px;
+  background-color: #dcdaf0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* ═══ SIGN IN FORM ═══ */
+.signin-container {
+  max-width: 380px;
+  position: relative; z-index: 1;
+}
+
+.signin-title { font-size: 26px; font-weight: 400; color: var(--text); margin-bottom: 6px; line-height: 1.2; }
+
+.new-account-row { font-size: 13.5px; color: var(--text-mid); margin-bottom: 18px; }
+.new-account-row a { color: var(--purple-link); font-weight: 600; text-decoration: none; }
+.new-account-row a:hover { text-decoration: underline; }
+
+/* Passkey CTA button */
+.btn-passkey-cta {
+  width: 100%; padding: 13px 20px;
+  background: var(--purple-btn);
+  color: white; border: none;
+  border-radius: var(--radius-btn);
+  font-size: 14px; font-weight: 600; font-family: var(--font);
+  cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+  transition: background 0.18s, transform 0.15s, box-shadow 0.15s;
+  margin-bottom: 10px;
+}
+.btn-passkey-cta:hover { background: var(--purple); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(61,26,110,0.35); }
+.btn-passkey-cta:active { transform: translateY(0); }
+
+.passkey-desc { font-size: 12.5px; color: var(--text-mid); line-height: 1.5; margin-bottom: 6px; }
+.manage-link { color: var(--purple-link); font-size: 13px; font-weight: 600; text-decoration: none; cursor: pointer; background: none; border: none; font-family: var(--font); padding: 0; }
+.manage-link:hover { text-decoration: underline; }
+
+.or-divider {
+  display: flex; align-items: center; gap: 10px;
+  margin: 18px 0; color: var(--text-light); font-size: 12px;
+}
+.or-divider::before, .or-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+/* Form fields */
+.form-label { display: block; font-size: 13.5px; font-weight: 400; color: var(--text); margin-bottom: 5px; }
+.form-input {
+  width: 100%; padding: 10px 13px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-input);
+  font-size: 14px; font-family: var(--font); color: var(--text);
+  background: var(--input-bg); outline: none;
+  transition: border-color 0.18s, box-shadow 0.18s;
+}
+.form-input:focus { border-color: var(--navy); box-shadow: 0 0 0 3px rgba(13,11,78,0.1); }
+.form-input.has-value { border-color: var(--navy); }
+
+.remember-row { display: flex; align-items: center; gap: 8px; margin: 12px 0 16px; }
+.remember-row input[type=checkbox] { width: 15px; height: 15px; accent-color: var(--purple); cursor: pointer; }
+.remember-row label { font-size: 13px; color: var(--text-mid); cursor: pointer; }
+
+/* Next button */
+.btn-next {
+  width: 100%; padding: 12px 20px;
+  background: var(--disabled-bg); color: var(--disabled-text);
+  border: none; border-radius: var(--radius-btn);
+  font-size: 14px; font-weight: 600; font-family: var(--font);
+  cursor: not-allowed; display: flex; align-items: center; justify-content: center; gap: 6px;
+  transition: all 0.18s; margin-bottom: 14px;
+}
+.btn-next.active {
+  background: var(--purple-btn); color: white; cursor: pointer;
+}
+.btn-next.active:hover { background: var(--purple); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(61,26,110,0.3); }
+
+.help-signin {
+  color: var(--purple-link); font-size: 13px; font-weight: 600;
+  background: none; border: none; cursor: pointer; font-family: var(--font);
+  display: flex; align-items: center; gap: 5px; padding: 0; margin-bottom: 18px;
+}
+.help-signin:hover { text-decoration: underline; }
+
+/* Social sign-in */
+.social-label { font-size: 12px; color: var(--text-light); text-align: center; margin-bottom: 12px; }
+.social-carousel-wrap { display: flex; align-items: center; gap: 6px; }
+.social-arrow {
+  width: 28px; height: 28px; border-radius: 50%;
+  border: 1.5px solid var(--border);
+  background: white; cursor: pointer; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-mid); font-size: 14px; transition: all 0.15s;
+}
+.social-arrow:hover { border-color: var(--purple); color: var(--purple); }
+.social-icons { display: flex; gap: 6px; overflow: hidden; }
+.social-icon {
+  width: 48px; height: 48px;
+  border: 1.5px solid var(--border); border-radius: 8px;
+  background: white; cursor: pointer; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.social-icon:hover { border-color: var(--purple); box-shadow: 0 2px 8px rgba(61,26,110,0.15); }
+
+.terms-text { font-size: 12px; color: var(--text-mid); line-height: 1.6; margin-top: 18px; }
+.terms-text a { color: var(--purple-link); text-decoration: none; font-weight: 500; }
+.terms-text a:hover { text-decoration: underline; }
+
+/* ═══ FOOTER ═══ */
+.site-footer {
+  background: var(--navy);
+  padding: 12px 24px;
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+}
+.footer-links { display: flex; gap: 18px; flex-wrap: wrap; }
+.footer-links a { color: rgba(255,255,255,0.7); font-size: 12px; text-decoration: none; }
+.footer-links a:hover { color: white; }
+.footer-copy { color: rgba(255,255,255,0.5); font-size: 12px; }
+
+/* ═══ MODAL OVERLAY ═══ */
+.modal-overlay {
+  display: none; position: fixed; inset: 0;
+  z-index: 200; align-items: center; justify-content: center;
+  animation: overlayIn 0.2s ease;
+}
+.modal-overlay.visible { display: flex; }
+@keyframes overlayIn { from{opacity:0} to{opacity:1} }
+
+/* ═══ PEARSON MODAL (white card) ═══ */
+.pearson-modal {
+  background: white; border-radius: var(--radius-modal);
+  width: 340px; padding: 28px 28px 24px;
+  position: relative;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  animation: modalIn 0.28s cubic-bezier(0.34,1.4,0.64,1);
+}
+@keyframes modalIn { from{opacity:0;transform:scale(0.92) translateY(8px)} to{opacity:1;transform:scale(1) translateY(0)} }
+
+.modal-close {
+  position: absolute; top: 14px; right: 16px;
+  background: none; border: none; cursor: pointer;
+  font-size: 20px; color: var(--text-mid); line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; border-radius: 50%;
+  transition: background 0.15s;
+}
+.modal-close:hover { background: #f0f0f0; }
+
+.modal-icon { text-align: center; margin-bottom: 12px; }
+.modal-title { font-size: 20px; font-weight: 600; color: var(--text); text-align: center; margin-bottom: 6px; }
+.modal-sub { font-size: 13px; color: var(--text-mid); text-align: center; margin-bottom: 20px; line-height: 1.5; }
+
+/* Radio options */
+.radio-option {
+  border: 1.5px solid var(--border);
+  border-radius: 8px; padding: 12px 14px;
+  margin-bottom: 10px; cursor: pointer;
+  transition: border-color 0.18s, background 0.18s;
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.radio-option:hover { border-color: var(--purple); background: var(--purple-light); }
+.radio-option.selected { border-color: var(--purple); background: var(--purple-light); }
+.radio-option input[type=radio] { margin-top: 2px; accent-color: var(--purple); cursor: pointer; flex-shrink: 0; width: 16px; height: 16px; }
+.radio-label { font-size: 13.5px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+.radio-desc  { font-size: 12px; color: var(--text-mid); line-height: 1.4; }
+
+.btn-continue {
+  width: 100%; padding: 12px;
+  background: var(--disabled-bg); color: var(--disabled-text);
+  border: none; border-radius: var(--radius-btn);
+  font-size: 14px; font-weight: 600; font-family: var(--font);
+  cursor: not-allowed; display: flex; align-items: center; justify-content: center; gap: 6px;
+  transition: all 0.18s; margin-top: 6px; margin-bottom: 12px;
+}
+.btn-continue.active {
+  background: var(--purple-btn); color: white; cursor: pointer;
+}
+.btn-continue.active:hover { background: var(--purple); }
+
+.diff-method {
+  text-align: center; font-size: 13px;
+  color: var(--purple-link); text-decoration: underline;
+  cursor: pointer; background: none; border: none; font-family: var(--font);
+  display: block; width: 100%;
+}
+
+/* ═══ WINDOWS SECURITY MODAL ═══ */
+.win-modal {
+  background: #1e1e1e; border-radius: 8px;
+  width: 380px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  overflow: hidden;
+  animation: modalIn 0.28s cubic-bezier(0.34,1.4,0.64,1);
+}
+.win-titlebar {
+  background: #2d2d2d; padding: 10px 16px;
+  display: flex; align-items: center; gap: 10px;
+}
+.win-titlebar-icon { width: 18px; height: 18px; }
+.win-titlebar-text { color: white; font-size: 13px; font-weight: 500; flex: 1; }
+.win-close { background: none; border: none; color: #aaa; cursor: pointer; font-size: 16px; padding: 0; line-height: 1; }
+.win-close:hover { color: white; }
+.win-body { padding: 24px; }
+.win-title { font-size: 18px; font-weight: 400; color: white; margin-bottom: 18px; }
+.win-account { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid #3a3a3a; }
+.win-avatar { width: 38px; height: 38px; border-radius: 50%; background: #444; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.win-user-name { font-size: 14px; font-weight: 500; color: white; }
+.win-user-sub  { font-size: 12px; color: #888; }
+.win-info-btn { margin-left: auto; width: 22px; height: 22px; border-radius: 50%; background: #007acc; border: none; cursor: pointer; color: white; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+.win-fp-area { text-align: center; padding: 10px 0 16px; }
+.win-fp-label { font-size: 14px; color: #ccc; margin-top: 12px; }
+.win-options-link { display: block; text-align: center; font-size: 13px; color: #4da6ff; text-decoration: none; cursor: pointer; margin-bottom: 16px; background: none; border: none; font-family: var(--font); width: 100%; }
+.win-options-link:hover { text-decoration: underline; }
+.win-diff-link { display: block; text-align: center; font-size: 13px; color: #4da6ff; text-decoration: none; cursor: pointer; margin-bottom: 20px; background: none; border: none; font-family: var(--font); width: 100%; }
+.win-cancel-btn { width: 100%; padding: 10px; background: #444; color: white; border: none; border-radius: 4px; font-size: 14px; font-family: var(--font); cursor: pointer; font-weight: 500; transition: background 0.15s; }
+.win-cancel-btn:hover { background: #555; }
+
+/* ═══ iCLOUD MODAL ═══ */
+.ios-modal {
+  background: #f2f2f7; border-radius: 14px;
+  width: 320px; overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+  animation: modalIn 0.28s cubic-bezier(0.34,1.4,0.64,1);
+  font-family: -apple-system, 'SF Pro Text', var(--font);
+}
+.ios-header { padding: 20px 16px 0; text-align: center; }
+.ios-title { font-size: 17px; font-weight: 600; color: #000; margin-bottom: 4px; }
+.ios-subtitle { font-size: 13px; color: #666; line-height: 1.4; margin-bottom: 16px; }
+.ios-account-row {
+  background: white; margin: 0 -0px; padding: 14px 16px;
+  display: flex; align-items: center; gap: 12px;
+  border-top: 0.5px solid #c6c6c8;
+}
+.ios-account-icon { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #6e6aff, #a78bfa); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.ios-account-name { font-size: 15px; font-weight: 500; color: #000; }
+.ios-account-sub  { font-size: 12px; color: #666; }
+.ios-icloud-badge { margin-left: auto; display: flex; align-items: center; gap: 4px; background: #e8f0fe; padding: 3px 8px; border-radius: 10px; }
+.ios-icloud-badge span { font-size: 11px; color: #0071e3; font-weight: 600; }
+
+.ios-face-area { padding: 20px 16px; text-align: center; background: white; border-top: 0.5px solid #c6c6c8; }
+.ios-face-label { font-size: 14px; color: #333; margin-top: 8px; font-weight: 400; }
+.ios-face-sub { font-size: 12px; color: #888; margin-top: 3px; }
+
+.ios-actions { display: flex; border-top: 0.5px solid #c6c6c8; }
+.ios-action-btn {
+  flex: 1; padding: 14px;
+  background: none; border: none; cursor: pointer;
+  font-size: 16px; font-weight: 400; color: #007aff;
+  font-family: -apple-system, var(--font); transition: background 0.15s;
+}
+.ios-action-btn:hover { background: #e8e8ed; }
+.ios-action-btn.bold { font-weight: 600; }
+.ios-action-btn + .ios-action-btn { border-left: 0.5px solid #c6c6c8; }
+
+/* ═══ GOOGLE PASSWORD MANAGER MODAL ═══ */
+.google-modal {
+  background: #202124; border-radius: 12px;
+  width: 360px; overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+  animation: modalIn 0.28s cubic-bezier(0.34,1.4,0.64,1);
+}
+.google-header { padding: 20px 20px 14px; display: flex; align-items: flex-start; gap: 12px; }
+.google-logo-area { display: flex; align-items: center; gap: 10px; flex: 1; }
+.google-modal-title { font-size: 16px; font-weight: 500; color: #e8eaed; line-height: 1.3; }
+.google-modal-site  { font-size: 13px; color: #9aa0a6; margin-top: 2px; }
+.google-close-btn { background: none; border: none; color: #9aa0a6; cursor: pointer; font-size: 18px; padding: 0; line-height: 1; }
+.google-close-btn:hover { color: #e8eaed; }
+
+.google-divider { height: 1px; background: #3c4043; margin: 0 20px; }
+
+.google-account-item {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 20px; cursor: pointer; transition: background 0.15s;
+}
+.google-account-item:hover { background: #2d2f31; }
+.google-account-avatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 16px; font-weight: 600; color: white; }
+.google-account-name { font-size: 14px; font-weight: 500; color: #e8eaed; }
+.google-account-email { font-size: 12px; color: #9aa0a6; margin-top: 1px; }
+.google-passkey-badge { margin-left: auto; display: flex; align-items: center; gap: 5px; }
+.google-passkey-badge span { font-size: 11px; color: #8ab4f8; }
+
+.google-fp-area { padding: 20px; text-align: center; }
+.google-fp-label { font-size: 14px; color: #e8eaed; margin-top: 12px; font-weight: 400; }
+.google-fp-sub   { font-size: 12px; color: #9aa0a6; margin-top: 4px; }
+
+.google-actions { display: flex; justify-content: flex-end; gap: 8px; padding: 8px 16px 16px; }
+.google-btn {
+  padding: 9px 20px; border-radius: 4px;
+  font-size: 14px; font-weight: 500; font-family: var(--font);
+  cursor: pointer; border: none; transition: all 0.15s;
+}
+.google-btn-cancel { background: transparent; color: #8ab4f8; }
+.google-btn-cancel:hover { background: #2d2f31; }
+.google-btn-confirm { background: #1a73e8; color: white; }
+.google-btn-confirm:hover { background: #1557b0; }
+
+/* ═══ MANAGE PASSKEYS PANEL ═══ */
+.manage-panel {
+  background: white; border-radius: var(--radius-modal);
+  width: 440px; max-height: 90vh; overflow-y: auto;
+  padding: 28px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  animation: modalIn 0.28s cubic-bezier(0.34,1.4,0.64,1);
+  position: relative;
+}
+.manage-title { font-size: 20px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+.manage-sub { font-size: 13px; color: var(--text-mid); margin-bottom: 22px; line-height: 1.5; }
+
+.passkey-card {
+  border: 1.5px solid var(--border);
+  border-radius: 10px; padding: 14px 16px;
+  margin-bottom: 10px; display: flex; align-items: center; gap: 12px;
+  transition: border-color 0.15s;
+}
+.passkey-card:hover { border-color: var(--purple); }
+.passkey-card-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.passkey-card-info { flex: 1; }
+.passkey-card-name { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+.passkey-card-detail { font-size: 12px; color: var(--text-mid); }
+.passkey-delete-btn {
+  background: none; border: 1.5px solid #ddd; border-radius: 6px;
+  padding: 5px 12px; font-size: 12px; color: var(--red);
+  cursor: pointer; font-family: var(--font); font-weight: 600;
+  transition: all 0.15s;
+}
+.passkey-delete-btn:hover { background: #fff0f0; border-color: var(--red); }
+
+.add-passkey-btn {
+  width: 100%; padding: 11px;
+  background: var(--purple-light); color: var(--purple-btn);
+  border: 1.5px dashed var(--purple);
+  border-radius: 10px; font-size: 13.5px; font-weight: 600;
+  cursor: pointer; font-family: var(--font);
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  transition: all 0.18s; margin-top: 6px;
+}
+.add-passkey-btn:hover { background: #e8ddf5; }
+
+.manage-close {
+  position: absolute; top: 16px; right: 18px;
+  background: none; border: none; cursor: pointer;
+  font-size: 20px; color: var(--text-mid);
+  width: 30px; height: 30px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s;
+}
+.manage-close:hover { background: #f0f0f0; }
+
+/* ═══ SUCCESS / SIGNED IN STATE ═══ */
+.success-panel {
+  background: white; border-radius: var(--radius-modal);
+  width: 360px; padding: 32px 28px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  animation: modalIn 0.28s cubic-bezier(0.34,1.4,0.64,1);
+  text-align: center;
+}
+.success-check { width: 60px; height: 60px; margin: 0 auto 14px; display: block; }
+.success-check circle { fill: #1a7340; }
+.success-check path { fill:none; stroke:white; stroke-width:3.5; stroke-linecap:round; stroke-linejoin:round; stroke-dasharray:30; stroke-dashoffset:30; animation: drawCheck 0.5s 0.15s ease forwards; }
+@keyframes drawCheck { to { stroke-dashoffset: 0; } }
+.success-title { font-size: 22px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+.success-sub { font-size: 13.5px; color: var(--text-mid); line-height: 1.6; margin-bottom: 20px; }
+.success-user-chip { display: flex; align-items: center; gap: 10px; background: #f8f6fc; border: 1px solid #ddd; border-radius: 8px; padding: 10px 14px; margin-bottom: 18px; text-align: left; }
+.success-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--purple-btn); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: white; flex-shrink: 0; }
+.success-name  { font-size: 14px; font-weight: 600; color: var(--text); }
+.success-email { font-size: 12px; color: var(--text-mid); }
+.security-badge { background: #eaf5ee; border: 1px solid #b0d9c0; border-radius: 8px; padding: 10px 13px; display: flex; align-items: flex-start; gap: 9px; font-size: 12.5px; color: #155c34; line-height: 1.5; margin-bottom: 18px; text-align: left; }
+.btn-dashboard { width: 100%; padding: 12px; background: var(--purple-btn); color: white; border: none; border-radius: var(--radius-btn); font-size: 14px; font-weight: 600; font-family: var(--font); cursor: pointer; transition: all 0.18s; }
+.btn-dashboard:hover { background: var(--purple); }
+.restart-link { margin-top: 12px; background: none; border: none; cursor: pointer; color: var(--purple-link); font-size: 13px; font-family: var(--font); text-decoration: underline; }
+
+/* ═══ SCANNING ANIMATION ═══ */
+.fp-scan-wrap { position: relative; width: 64px; height: 64px; margin: 0 auto; }
+.fp-scan-wrap svg { position: absolute; inset: 0; }
+.fp-track { fill: none; stroke: rgba(255,255,255,0.15); stroke-width: 3; }
+.fp-prog  { fill: none; stroke: #4da6ff; stroke-width: 3; stroke-linecap: round; stroke-dasharray: 175; stroke-dashoffset: 175; transform-origin: 32px 32px; transform: rotate(-90deg); animation: scanFill 1.6s ease forwards; }
+@keyframes scanFill { to { stroke-dashoffset: 0; } }
+.fp-scan-emoji { position: absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:22px; }
+
+/* Google FP scan */
+.gfp-track { fill: none; stroke: rgba(255,255,255,0.1); stroke-width: 3; }
+.gfp-prog  { fill: none; stroke: #8ab4f8; stroke-width: 3; stroke-linecap: round; stroke-dasharray: 175; stroke-dashoffset: 175; transform-origin: 32px 32px; transform: rotate(-90deg); animation: scanFill 1.6s ease forwards; }
+
+/* iOS FaceID pulse */
+.faceid-icon { position: relative; width: 64px; height: 64px; margin: 0 auto; }
+.faceid-ring { position: absolute; inset: 0; border-radius: 14px; border: 2.5px solid #007aff; animation: faceIdPulse 1.2s ease-in-out infinite; }
+@keyframes faceIdPulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.08);opacity:0.6} }
+
+/* ═══ TOAST ═══ */
+.toast {
+  position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(20px);
+  background: #1e1e1e; color: white; padding: 11px 22px; border-radius: 100px;
+  font-size: 13.5px; font-weight: 500; opacity: 0;
+  transition: all 0.3s; z-index: 500; white-space: nowrap;
+  pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ═══ SCREEN FADE ═══ */
+.screen { display: none; }
+.screen.active { display: block; animation: fadeUp 0.25s ease; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(5px)} to{opacity:1;transform:translateY(0)} }
+
+/* ═══ STEP INDICATOR ═══ */
+.step-bar { display: flex; align-items: center; gap: 0; margin-bottom: 28px; }
+.sdot { width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--border); background: white; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: #aaa; flex-shrink: 0; transition: all 0.25s; }
+.sdot.active { border-color: var(--purple-btn); background: var(--purple-btn); color: white; }
+.sdot.done { border-color: var(--green); background: var(--green); color: white; }
+.sdot.done span { display: none; }
+.sdot.done::after { content: '✓'; font-size: 11px; }
+.sline { flex: 1; height: 2px; background: var(--border); max-width: 30px; transition: background 0.4s; }
+.sline.done { background: var(--green); }
+</style>
+</head>
+<body>
+
+<!-- SCENARIO BAR -->
+<div class="scenario-bar">
+  <span>Scenario:</span>
+  <button class="sc-btn active" data-sc="new" onclick="setScenario('new')">🆕 New User</button>
+  <button class="sc-btn" data-sc="returning" onclick="setScenario('returning')">⚡ Returning User</button>
+  <button class="sc-btn" data-sc="icloud" onclick="setScenario('icloud')">🍎 iCloud Keychain</button>
+  <button class="sc-btn" data-sc="google" onclick="setScenario('google')">🔑 Google Password Manager</button>
+  <button class="sc-btn" data-sc="manage" onclick="setScenario('manage')">⚙️ Manage Passkeys</button>
+</div>
+
+<!-- HEADER -->
+<header class="site-header">
+  <a class="pearson-logo" href="#">
+    <svg width="20" height="20" viewBox="0 0 22 22" fill="none">
+      <path d="M6 3L3 11L6 19" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M16 3L19 11L16 19" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <span class="logo-text">Pearson</span>
+  </a>
+  <div class="header-right">
+    <button class="lang-btn">English <svg width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round"/></svg></button>
+    <button class="help-btn">?</button>
+  </div>
+</header>
+
+<!-- PAGE BODY -->
+<div class="page-body" id="pageBody">
+
+  <!-- SIGN IN FORM (always visible in bg) -->
+  <div class="signin-container">
+
+    <!-- Step indicator -->
+    <div class="step-bar" id="stepBar"></div>
+
+    <h1 class="signin-title">Sign in</h1>
+    <p class="new-account-row">New to Pearson? <a href="#">Create an account</a></p>
+
+    <!-- Passkey CTA -->
+    <button class="btn-passkey-cta" id="passkeyCtaBtn" onclick="handlePasskeyCta()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="4.5" stroke="white" stroke-width="2"/><path d="M2 20c0-3.3 3.1-6 7-6" stroke="white" stroke-width="2" stroke-linecap="round"/><path d="M17 14l1.5 1.5L21 13" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="18" cy="17" r="3.5" stroke="white" stroke-width="2"/></svg>
+      Create or Sign in with Passkey
+    </button>
+    <p class="passkey-desc">Sign in or create a passkey using your fingerprint, Face ID, or device PIN – fast and password-free.</p>
+    <button class="manage-link" onclick="openManagePasskeys()">Manage Passkeys</button>
+
+    <div class="or-divider">or</div>
+
+    <div style="margin-bottom:14px">
+      <label class="form-label">Username</label>
+      <input class="form-input" id="usernameInput" type="text" placeholder="Enter your username"
+        oninput="handleUsernameInput(this.value)">
+    </div>
+
+    <div class="remember-row">
+      <input type="checkbox" id="rememberMe">
+      <label for="rememberMe">Remember me</label>
+    </div>
+
+    <button class="btn-next" id="nextBtn" onclick="handleNext()">
+      Next <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 3l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+
+    <button class="help-signin">
+      Need help signing in?
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 5l4 4 4-4" stroke="var(--purple-link)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+
+    <p class="social-label">— or sign-in with —</p>
+    <div class="social-carousel-wrap">
+      <button class="social-arrow">&#8249;</button>
+      <div class="social-icons">
+        <!-- Blank/custom -->
+        <div class="social-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" stroke="#888" stroke-width="1.5"/></svg>
+        </div>
+        <!-- Facebook -->
+        <div class="social-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="#1877F2"><path d="M24 12.07C24 5.41 18.63 0 12 0S0 5.41 0 12.07C0 18.1 4.39 23.1 10.13 24v-8.44H7.08v-3.49h3.04V9.41c0-3.02 1.8-4.7 4.54-4.7 1.31 0 2.68.24 2.68.24v2.97h-1.51c-1.49 0-1.95.93-1.95 1.88v2.27h3.32l-.53 3.49h-2.79V24C19.61 23.1 24 18.1 24 12.07z"/></svg>
+        </div>
+        <!-- Microsoft -->
+        <div class="social-icon">
+          <svg width="20" height="20" viewBox="0 0 21 21"><rect x="0" y="0" width="10" height="10" fill="#f25022"/><rect x="11" y="0" width="10" height="10" fill="#7fba00"/><rect x="0" y="11" width="10" height="10" fill="#00a4ef"/><rect x="11" y="11" width="10" height="10" fill="#ffb900"/></svg>
+        </div>
+        <!-- LinkedIn -->
+        <div class="social-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="#0A66C2"><path d="M20.45 20.45h-3.55v-5.57c0-1.33-.03-3.04-1.85-3.04-1.85 0-2.13 1.45-2.13 2.94v5.67H9.38V9h3.41v1.56h.05c.47-.9 1.63-1.85 3.35-1.85 3.59 0 4.25 2.36 4.25 5.43v6.31zM5.34 7.43a2.06 2.06 0 110-4.12 2.06 2.06 0 010 4.12zM7.12 20.45H3.57V9h3.55v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.73V1.73C24 .77 23.2 0 22.22 0z"/></svg>
+        </div>
+        <!-- Apple -->
+        <div class="social-icon">
+          <svg width="20" height="22" viewBox="0 0 814 1000" fill="#000"><path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105-57.8-155.5-127.4C46 680 0 560.4 0 444.7c0-139.8 90.9-213.4 179.7-213.4 75.1 0 123.7 49.5 162.5 49.5 37.3 0 92-52.1 174.9-52.1 27.1 0 119.6 2.8 190.1 82.9zm-85.3-175.8c-23.1 27.5-68.7 49.5-110.9 49.5-4.8 0-9.7-.6-13.9-1.9 1.3-28.7 19.8-63.7 44.6-84.7 27.5-23.1 73.7-43.2 113.8-44.5 1 5.2 1.6 10.4 1.6 16.3 0 26.5-8.4 54.3-35.2 65.3z"/></svg>
+        </div>
+      </div>
+      <button class="social-arrow">&#8250;</button>
+    </div>
+
+    <p class="terms-text" style="margin-top:18px">
+      By signing in, you agree to Pearson's <a href="#">Terms of Use</a> and acknowledge our <a href="#">Privacy Notice</a>.
+    </p>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer class="site-footer">
+  <div class="footer-links">
+    <a href="#">Terms of Use</a>
+    <a href="#">Privacy</a>
+    <a href="#">Cookies</a>
+    <a href="#">Do not sell or share my personal information</a>
+    <a href="#">Accessibility</a>
+    <a href="#">Privacy Notice</a>
+  </div>
+  <span class="footer-copy">© 2026 Pearson All rights reserved.</span>
+</footer>
+
+<!-- ════════════════════════════════════════════
+     MODAL: Continue with Passkey (Pearson)
+════════════════════════════════════════════ -->
+<div class="modal-overlay" id="passkeyChoiceModal">
+  <div class="pearson-modal">
+    <button class="modal-close" onclick="closeModal('passkeyChoiceModal')">×</button>
+    <div class="modal-icon">
+      <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+        <circle cx="20" cy="16" r="9" fill="#3D1A6E"/>
+        <path d="M4 40c0-7.2 7.2-13 16-13" stroke="#3D1A6E" stroke-width="3" stroke-linecap="round"/>
+        <circle cx="37" cy="35" r="7" stroke="#3D1A6E" stroke-width="2.5"/>
+        <path d="M33 35l2.5 2.5L41 31" stroke="#3D1A6E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <h2 class="modal-title">Continue with Passkey</h2>
+    <p class="modal-sub">Choose how you'd like to proceed with your passkey.</p>
+
+    <div class="radio-option" id="opt-signin" onclick="selectOption('signin')">
+      <input type="radio" name="passkeyOpt" id="r-signin">
+      <div>
+        <div class="radio-label">Sign in with Passkey</div>
+        <div class="radio-desc">You have a passkey on this device or another device.</div>
+      </div>
+    </div>
+
+    <div class="radio-option" id="opt-create" onclick="selectOption('create')">
+      <input type="radio" name="passkeyOpt" id="r-create">
+      <div>
+        <div class="radio-label">Create a new Passkey</div>
+        <div class="radio-desc">You don't have a passkey on this device. Create one now for faster sign-in.</div>
+      </div>
+    </div>
+
+    <button class="btn-continue" id="continueBtn" onclick="handleContinue()">
+      Continue <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 3l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <button class="diff-method" onclick="closeModal('passkeyChoiceModal')">Use a different sign in method</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     MODAL: Windows Security (biometric)
+════════════════════════════════════════════ -->
+<div class="modal-overlay" id="windowsModal">
+  <div class="win-modal">
+    <div class="win-titlebar">
+      <!-- Windows Security shield icon -->
+      <svg class="win-titlebar-icon" viewBox="0 0 18 18" fill="none">
+        <path d="M9 1.5l6 2.4v4.8C15 13 12.3 16 9 17 5.7 16 3 13 3 8.7V3.9L9 1.5z" fill="#0078d4" stroke="none"/>
+        <path d="M6 9l2.5 2.5L13 7" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span class="win-titlebar-text">Windows Security</span>
+      <button class="win-close" onclick="closeModal('windowsModal')">×</button>
+    </div>
+    <div class="win-body">
+      <h3 class="win-title">Sign in with a passkey</h3>
+      <div class="win-account">
+        <div class="win-avatar">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4.5" stroke="#aaa" stroke-width="1.5"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="#aaa" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </div>
+        <div>
+          <div class="win-user-name" id="winUsername">Derek Smith</div>
+          <div class="win-user-sub">Passkey for iam-stage.pearson.com</div>
+        </div>
+        <button class="win-info-btn">i</button>
+      </div>
+      <div class="win-fp-area" id="winFpArea">
+        <!-- Fingerprint icon -->
+        <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+          <circle cx="32" cy="32" r="30" fill="rgba(0,120,212,0.1)"/>
+          <path d="M32 18c-7.7 0-14 6.3-14 14" stroke="#4da6ff" stroke-width="2.2" stroke-linecap="round"/>
+          <path d="M32 22c-5.5 0-10 4.5-10 10 0 4.2 2.1 7.9 5.2 10.1" stroke="#4da6ff" stroke-width="2.2" stroke-linecap="round"/>
+          <path d="M32 26c-3.3 0-6 2.7-6 6 0 2.6 1.3 4.9 3.3 6.3" stroke="#4da6ff" stroke-width="2.2" stroke-linecap="round"/>
+          <circle cx="32" cy="32" r="2.5" fill="#4da6ff"/>
+          <path d="M35 32c0 1.7-.8 3.2-2 4.2" stroke="#4da6ff" stroke-width="2.2" stroke-linecap="round"/>
+          <path d="M38 32c0 3.3-1.5 6.2-3.9 8.1" stroke="#4da6ff" stroke-width="2.2" stroke-linecap="round"/>
+          <path d="M41 32c0 5-2.7 9.4-6.8 11.8" stroke="#4da6ff" stroke-width="2.2" stroke-linecap="round"/>
+        </svg>
+        <div class="win-fp-label">Scan your finger on the fingerprint reader.</div>
+      </div>
+      <button class="win-options-link">Sign-in options</button>
+      <button class="win-diff-link" onclick="closeModal('windowsModal')">Choose a different passkey</button>
+      <button class="win-cancel-btn" onclick="closeModal('windowsModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     MODAL: iCloud Keychain (iOS style)
+════════════════════════════════════════════ -->
+<div class="modal-overlay" id="icloudModal">
+  <div class="ios-modal">
+    <div class="ios-header">
+      <!-- iCloud + Passkey icon -->
+      <div style="margin-bottom:12px;text-align:center">
+        <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
+          <rect width="52" height="52" rx="12" fill="#f2f2f7"/>
+          <path d="M14 34c-3.3 0-6-2.7-6-6 0-2.9 2.1-5.4 4.9-5.9C13.5 19.4 16.5 17 20 17c3.2 0 5.9 1.9 7.1 4.7.3-.1.6-.1.9-.1 3.3 0 6 2.7 6 6s-2.7 6-6 6H14z" fill="#0071e3"/>
+          <circle cx="35" cy="31" r="6" fill="white" stroke="#0071e3" stroke-width="1.5"/>
+          <path d="M32.5 31l2 2L37.5 29" stroke="#0071e3" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <h3 class="ios-title">Sign in with Passkey</h3>
+      <p class="ios-subtitle">Use your saved passkey from iCloud Keychain to sign in to pearson.com</p>
+    </div>
+    <div class="ios-account-row">
+      <div class="ios-account-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" fill="white"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </div>
+      <div>
+        <div class="ios-account-name">Derek Smith</div>
+        <div class="ios-account-sub" data-em="derek.smith" data-dom="icloud.com"></div>
+      </div>
+      <div class="ios-icloud-badge">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M6 18c-3.3 0-6-2.7-6-6 0-2.9 2-5.3 4.8-5.8C11 2.5 16.8 5 17.5 10.2 20.1 10.8 22 13 22 15.5c0 2.5-2 4.5-4.5 4.5H6z" fill="#0071e3"/></svg>
+        <span>iCloud</span>
+      </div>
+    </div>
+    <div class="ios-face-area" id="iosFaceArea">
+      <div class="faceid-icon">
+        <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+          <rect x="2" y="2" width="60" height="60" rx="14" stroke="#007aff" stroke-width="2.5"/>
+          <!-- Face lines -->
+          <line x1="22" y1="26" x2="22" y2="30" stroke="#007aff" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="42" y1="26" x2="42" y2="30" stroke="#007aff" stroke-width="2.5" stroke-linecap="round"/>
+          <path d="M27 40c0 0 2 3 5 3s5-3 5-3" stroke="#007aff" stroke-width="2.5" stroke-linecap="round"/>
+          <path d="M32 24v6" stroke="#007aff" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <div class="faceid-ring"></div>
+      </div>
+      <div class="ios-face-label">Authenticating with Face ID…</div>
+      <div class="ios-face-sub">Stored in iCloud Keychain</div>
+    </div>
+    <div class="ios-actions">
+      <button class="ios-action-btn" onclick="closeModal('icloudModal')">Cancel</button>
+      <button class="ios-action-btn bold" onclick="completeIcloud()">Use Passkey</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     MODAL: Google Password Manager
+════════════════════════════════════════════ -->
+<div class="modal-overlay" id="googleModal">
+  <div class="google-modal">
+    <div class="google-header">
+      <div class="google-logo-area">
+        <!-- Google G logo -->
+        <svg width="24" height="24" viewBox="0 0 24 24">
+          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+        </svg>
+        <div>
+          <div class="google-modal-title">Sign in with a passkey</div>
+          <div class="google-modal-site">pearson.com</div>
+        </div>
+      </div>
+      <button class="google-close-btn" onclick="closeModal('googleModal')">×</button>
+    </div>
+    <div class="google-divider"></div>
+
+    <!-- Account selector -->
+    <div id="googleAccountList">
+      <div class="google-account-item" onclick="selectGoogleAccount(this)">
+        <div class="google-account-avatar" style="background: linear-gradient(135deg,#4285f4,#0d47a1)">A</div>
+        <div>
+          <div class="google-account-name">Derek Smith</div>
+          <div class="google-account-email" data-em="derek.smith" data-dom="gmail.com"></div>
+        </div>
+        <div class="google-passkey-badge">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="4" stroke="#8ab4f8" stroke-width="1.8"/><path d="M2 20c0-4 3.1-7 7-7" stroke="#8ab4f8" stroke-width="1.8" stroke-linecap="round"/><circle cx="19" cy="16" r="3.5" stroke="#8ab4f8" stroke-width="1.8"/><path d="M16 16l2 2 3-3" stroke="#8ab4f8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>Passkey</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Fingerprint area (hidden initially) -->
+    <div class="google-fp-area" id="googleFpArea" style="display:none">
+      <div class="fp-scan-wrap">
+        <svg width="64" height="64" viewBox="0 0 64 64">
+          <circle class="gfp-track" cx="32" cy="32" r="28"/>
+          <circle class="gfp-prog" cx="32" cy="32" r="28"/>
+        </svg>
+        <span class="fp-scan-emoji">🔑</span>
+      </div>
+      <div class="google-fp-label">Verifying with Google Password Manager…</div>
+      <div class="google-fp-sub">Touch your fingerprint sensor</div>
+    </div>
+
+    <div class="google-divider"></div>
+    <div class="google-actions">
+      <button class="google-btn google-btn-cancel" onclick="closeModal('googleModal')">Cancel</button>
+      <button class="google-btn google-btn-confirm" id="googleConfirmBtn" onclick="confirmGoogle()" style="display:none">Use passkey</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     MODAL: Manage Passkeys
+════════════════════════════════════════════ -->
+<div class="modal-overlay" id="manageModal">
+  <div class="manage-panel">
+    <button class="manage-close" onclick="closeModal('manageModal')">×</button>
+    <h2 class="manage-title">Manage Passkeys</h2>
+    <p class="manage-sub">Passkeys let you sign in with your fingerprint, Face ID, or device PIN. Manage your saved passkeys below.</p>
+
+    <div id="passkeyList">
+      <div class="passkey-card" id="pk-windows">
+        <div class="passkey-card-icon" style="background:#1a1a2e">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="8.5" height="8.5" fill="white"/><rect x="12.5" y="3" width="8.5" height="8.5" fill="white"/><rect x="3" y="12.5" width="8.5" height="8.5" fill="white"/><rect x="12.5" y="12.5" width="8.5" height="8.5" fill="white"/></svg>
+        </div>
+        <div class="passkey-card-info">
+          <div class="passkey-card-name">Windows Hello</div>
+          <div class="passkey-card-detail">This device · Added 12 Jan 2025 · Fingerprint</div>
+        </div>
+        <button class="passkey-delete-btn" onclick="deletePasskey('pk-windows','Windows Hello')">Remove</button>
+      </div>
+
+      <div class="passkey-card" id="pk-icloud">
+        <div class="passkey-card-icon" style="background:#0071e3">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M6 18c-3.3 0-6-2.7-6-6 0-2.9 2-5.3 4.8-5.8C11 2.5 16.8 5 17.5 10.2 20.1 10.8 22 13 22 15.5c0 2.5-2 4.5-4.5 4.5H6z" fill="white"/></svg>
+        </div>
+        <div class="passkey-card-info">
+          <div class="passkey-card-name">iCloud Keychain</div>
+          <div class="passkey-card-detail">Apple devices · Added 3 Feb 2025 · Face ID / Touch ID</div>
+        </div>
+        <button class="passkey-delete-btn" onclick="deletePasskey('pk-icloud','iCloud Keychain')">Remove</button>
+      </div>
+
+      <div class="passkey-card" id="pk-google">
+        <div class="passkey-card-icon" style="background:#202124">
+          <svg width="22" height="22" viewBox="0 0 24 24">
+            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+          </svg>
+        </div>
+        <div class="passkey-card-info">
+          <div class="passkey-card-name">Google Password Manager</div>
+          <div class="passkey-card-detail">Android / Chrome · Added 20 Mar 2025 · Fingerprint</div>
+        </div>
+        <button class="passkey-delete-btn" onclick="deletePasskey('pk-google','Google Password Manager')">Remove</button>
+      </div>
+    </div>
+
+    <button class="add-passkey-btn" onclick="closeModal('manageModal'); openPasskeyChoice()">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="var(--purple-btn)" stroke-width="2" stroke-linecap="round"/></svg>
+      Add a new passkey
+    </button>
+
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
+      <p style="font-size:12px;color:var(--text-mid);line-height:1.6">
+        Passkeys are stored securely on your device or in your password manager. Removing a passkey here does not delete it from your device — you may also need to remove it from your browser or OS settings.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     MODAL: Signed In Success
+════════════════════════════════════════════ -->
+<div class="modal-overlay" id="successModal">
+  <div class="success-panel">
+    <svg class="success-check" viewBox="0 0 60 60"><circle cx="30" cy="30" r="30"/><path d="M18 30l9 9 15-15"/></svg>
+    <h2 class="success-title">You're signed in!</h2>
+    <p class="success-sub" id="successMsg">Authenticated securely with your passkey — no password needed.</p>
+    <div class="success-user-chip">
+      <div class="success-avatar">DS</div>
+      <div>
+        <div class="success-name">Derek Smith</div>
+        <div class="success-email" id="successEmail" data-em="derek.smith" data-dom="pearson.com"></div>
+      </div>
+    </div>
+    <div class="security-badge">
+      <svg width="15" height="15" viewBox="0 0 14 14" fill="none" style="flex-shrink:0;margin-top:1px"><path d="M7 1.5l4 1.6v3c0 2.5-1.7 4.3-4 5.1-2.3-.8-4-2.6-4-5.1v-3L7 1.5z" fill="#1a7340"/></svg>
+      <span id="successBadgeText">Passkey authenticated via Windows Hello · No password was transmitted</span>
+    </div>
+    <button class="btn-dashboard">Continue to dashboard →</button>
+    <button class="restart-link" onclick="restart()">← Restart prototype</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════
+var scenario = 'new';
+var selectedOption = null;
+var stepIndex = 0;
+
+var scenarioLabels = {
+  new:       ['Enter username', 'Choose method', 'Biometric auth', 'Signed in'],
+  returning: ['Passkey prompt', 'Signed in'],
+  icloud:    ['iCloud auth', 'Signed in'],
+  google:    ['Google auth', 'Signed in'],
+  manage:    ['Manage passkeys']
+};
+
+// Resolve email data-attributes on page load (avoids Cloudflare obfuscation)
+function resolveEmails() {
+  document.querySelectorAll('[data-em][data-dom]').forEach(function(el) {
+    el.textContent = el.getAttribute('data-em') + '@' + el.getAttribute('data-dom');
+  });
+}
+
+// ══════════════════════════════════════════════
+//  SCENARIO
+// ══════════════════════════════════════════════
+window.setScenario = function(sc) {
+  scenario = sc;
+  stepIndex = 0;
+  selectedOption = null;
+  document.querySelectorAll('.sc-btn').forEach(function(b) {
+    b.classList.toggle('active', b.getAttribute('data-sc') === sc);
+  });
+  resetUI();
+  renderStepBar();
+  if (sc === 'returning') {
+    document.getElementById('pageBody').classList.add('dimmed');
+    setTimeout(function(){ openPasskeyChoice(true); }, 300);
+  } else if (sc === 'icloud') {
+    document.getElementById('pageBody').classList.add('dimmed');
+    setTimeout(function(){ showModal('icloudModal'); }, 300);
+  } else if (sc === 'google') {
+    document.getElementById('pageBody').classList.add('dimmed');
+    setTimeout(function(){ showModal('googleModal'); }, 300);
+  } else if (sc === 'manage') {
+    document.getElementById('pageBody').classList.add('dimmed');
+    setTimeout(function(){ showModal('manageModal'); }, 300);
+  }
+};
+
+function resetUI() {
+  closeAllModals();
+  document.getElementById('pageBody').classList.remove('dimmed');
+  document.getElementById('usernameInput').value = '';
+  document.getElementById('nextBtn').classList.remove('active');
+  document.getElementById('usernameInput').classList.remove('has-value');
+  selectedOption = null;
+  document.getElementById('continueBtn').classList.remove('active');
+  document.querySelectorAll('.radio-option').forEach(function(o){ o.classList.remove('selected'); });
+  document.querySelectorAll('input[type=radio]').forEach(function(r){ r.checked = false; });
+  document.getElementById('googleAccountList').style.display = 'block';
+  document.getElementById('googleFpArea').style.display = 'none';
+  document.getElementById('googleConfirmBtn').style.display = 'none';
+  document.getElementById('winFpArea').innerHTML = getFpHTML();
+}
+
+function renderStepBar() {
+  var labels = scenarioLabels[scenario] || [];
+  var bar = document.getElementById('stepBar');
+  bar.innerHTML = labels.map(function(l, i) {
+    var done = i < stepIndex, active = i === stepIndex;
+    var cls = done ? 'done' : (active ? 'active' : '');
+    var click = i <= stepIndex ? 'onclick="jumpStep(' + i + ')"' : '';
+    var dot = '<div class="sdot ' + cls + '" ' + click + '><span>' + (i+1) + '</span></div>';
+    var line = i < labels.length - 1 ? '<div class="sline ' + (done ? 'done' : '') + '"></div>' : '';
+    return dot + line;
+  }).join('');
+}
+
+function advanceStep() {
+  stepIndex++;
+  renderStepBar();
+}
+
+window.jumpStep = function(i) {
+  if (i <= stepIndex) { stepIndex = i; renderStepBar(); }
+};
+
+// ══════════════════════════════════════════════
+//  USERNAME INPUT & NEXT
+// ══════════════════════════════════════════════
+window.handleUsernameInput = function(val) {
+  var btn = document.getElementById('nextBtn');
+  var inp = document.getElementById('usernameInput');
+  if (val.trim().length > 0) {
+    btn.classList.add('active');
+    inp.classList.add('has-value');
+  } else {
+    btn.classList.remove('active');
+    inp.classList.remove('has-value');
+  }
+};
+
+window.handleNext = function() {
+  var val = document.getElementById('usernameInput').value.trim();
+  if (!val) return;
+  advanceStep();
+  document.getElementById('pageBody').classList.add('dimmed');
+  setTimeout(function(){ openPasskeyChoice(false); }, 200);
+};
+
+// ══════════════════════════════════════════════
+//  PASSKEY CTA
+// ══════════════════════════════════════════════
+window.handlePasskeyCta = function() {
+  document.getElementById('pageBody').classList.add('dimmed');
+  openPasskeyChoice(scenario === 'returning');
+};
+
+function openPasskeyChoice(preSelectSignin) {
+  if (preSelectSignin) { selectOption('signin'); }
+  showModal('passkeyChoiceModal');
+}
+
+window.openPasskeyChoice = openPasskeyChoice;
+
+// ══════════════════════════════════════════════
+//  RADIO OPTIONS
+// ══════════════════════════════════════════════
+window.selectOption = function(opt) {
+  selectedOption = opt;
+  document.getElementById('opt-signin').classList.toggle('selected', opt === 'signin');
+  document.getElementById('opt-create').classList.toggle('selected', opt === 'create');
+  document.getElementById('r-signin').checked = opt === 'signin';
+  document.getElementById('r-create').checked = opt === 'create';
+  document.getElementById('continueBtn').classList.add('active');
+};
+
+function selectOption(opt) {
+  window.selectOption(opt);
+}
+
+window.handleContinue = function() {
+  if (!selectedOption) return;
+  closeModal('passkeyChoiceModal');
+  advanceStep();
+  var uname = document.getElementById('usernameInput').value || 'Derek Smith';
+  if (selectedOption === 'signin') {
+    setTimeout(function() {
+      if (scenario === 'icloud') {
+        showModal('icloudModal');
+      } else if (scenario === 'google') {
+        showModal('googleModal');
+      } else {
+        document.getElementById('winUsername').textContent = uname;
+        showModal('windowsModal');
+        simulateFingerprint();
+      }
+    }, 200);
+  } else {
+    // Create new passkey
+    document.getElementById('winUsername').textContent = uname;
+    setTimeout(function() {
+      showModal('windowsModal');
+      simulateFingerprint();
+    }, 200);
+  }
+};
+
+// ══════════════════════════════════════════════
+//  WINDOWS BIOMETRIC
+// ══════════════════════════════════════════════
+function getFpHTML() {
+  return '<svg width="64" height="64" viewBox="0 0 64 64" fill="none">' +
+    '<circle cx="32" cy="32" r="30" fill="rgba(0,120,212,0.1)"/>' +
+    '<path d="M32 18c-7.7 0-14 6.3-14 14" stroke="#4da6ff" stroke-width="2.2" stroke-linecap="round"/>' +
+    '<path d="M32 22c-5.5 0-10 4.5-10 10 0 4.2 2.1 7.9 5.2 10.1" stroke="#4da6ff" stroke-width="2.2" stroke-linecap="round"/>' +
+    '<path d="M32 26c-3.3 0-6 2.7-6 6 0 2.6 1.3 4.9 3.3 6.3" stroke="#4da6ff" stroke-width="2.2" stroke-linecap="round"/>' +
+    '<circle cx="32" cy="32" r="2.5" fill="#4da6ff"/>' +
+    '<path d="M35 32c0 1.7-.8 3.2-2 4.2" stroke="#4da6ff" stroke-width="2.2" stroke-linecap="round"/>' +
+    '<path d="M38 32c0 3.3-1.5 6.2-3.9 8.1" stroke="#4da6ff" stroke-width="2.2" stroke-linecap="round"/>' +
+    '<path d="M41 32c0 5-2.7 9.4-6.8 11.8" stroke="#4da6ff" stroke-width="2.2" stroke-linecap="round"/>' +
+    '</svg>' +
+    '<div class="win-fp-label">Scan your finger on the fingerprint reader.</div>';
+}
+
+function simulateFingerprint() {
+  setTimeout(function() {
+    var area = document.getElementById('winFpArea');
+    if (!area) return;
+    area.innerHTML =
+      '<div class="fp-scan-wrap">' +
+        '<svg width="64" height="64" viewBox="0 0 64 64">' +
+          '<circle class="fp-track" cx="32" cy="32" r="28"/>' +
+          '<circle class="fp-prog" cx="32" cy="32" r="28"/>' +
+        '</svg>' +
+        '<span class="fp-scan-emoji">🔐</span>' +
+      '</div>' +
+      '<div class="win-fp-label" style="margin-top:10px">Verifying…</div>';
+    setTimeout(function() {
+      closeModal('windowsModal');
+      completeAuth('windows');
+    }, 1800);
+  }, 1500);
+}
+
+// ══════════════════════════════════════════════
+//  iCLOUD
+// ══════════════════════════════════════════════
+window.completeIcloud = function() {
+  closeModal('icloudModal');
+  completeAuth('icloud');
+};
+
+// ══════════════════════════════════════════════
+//  GOOGLE
+// ══════════════════════════════════════════════
+window.selectGoogleAccount = function(el) {
+  document.getElementById('googleAccountList').style.display = 'none';
+  document.getElementById('googleFpArea').style.display = 'block';
+  document.getElementById('googleConfirmBtn').style.display = 'inline-block';
+  setTimeout(function() {
+    closeModal('googleModal');
+    completeAuth('google');
+  }, 2400);
+};
+
+window.confirmGoogle = function() {
+  closeModal('googleModal');
+  completeAuth('google');
+};
+
+// ══════════════════════════════════════════════
+//  COMPLETE AUTH → SUCCESS
+// ══════════════════════════════════════════════
+function completeAuth(method) {
+  advanceStep();
+  document.getElementById('pageBody').classList.add('dimmed');
+  var msgs = {
+    windows: {
+      msg: 'Authenticated securely with your passkey — no password needed.',
+      badge: 'Passkey authenticated via Windows Hello · No password was transmitted',
+      email: 'derek.smith@pearson.com'
+    },
+    icloud: {
+      msg: 'Authenticated instantly using your iCloud Keychain passkey.',
+      badge: 'Passkey from iCloud Keychain · Face ID verified · No password transmitted',
+      email: 'derek.smith@icloud.com'
+    },
+    google: {
+      msg: 'Authenticated using your Google Password Manager passkey.',
+      badge: 'Passkey from Google Password Manager · Fingerprint verified · No password transmitted',
+      email: 'derek.smith@gmail.com'
+    }
+  };
+  var m = msgs[method] || msgs.windows;
+  document.getElementById('successMsg').textContent = m.msg;
+  document.getElementById('successBadgeText').textContent = m.badge;
+  document.getElementById('successEmail').textContent = m.email;
+  setTimeout(function(){ showModal('successModal'); }, 300);
+}
+
+// ══════════════════════════════════════════════
+//  MANAGE PASSKEYS
+// ══════════════════════════════════════════════
+window.openManagePasskeys = function() {
+  document.getElementById('pageBody').classList.add('dimmed');
+  showModal('manageModal');
+};
+
+window.deletePasskey = function(id, name) {
+  var card = document.getElementById(id);
+  if (!card) return;
+  card.style.transition = 'all 0.3s';
+  card.style.opacity = '0';
+  card.style.transform = 'translateX(20px)';
+  setTimeout(function() { card.remove(); showToast('"' + name + '" passkey removed'); }, 300);
+};
+
+// ══════════════════════════════════════════════
+//  MODAL HELPERS
+// ══════════════════════════════════════════════
+function showModal(id) {
+  document.getElementById(id).classList.add('visible');
+}
+
+window.closeModal = function(id) {
+  document.getElementById(id).classList.remove('visible');
+  if (!anyModalOpen()) {
+    document.getElementById('pageBody').classList.remove('dimmed');
+  }
+};
+
+function closeAllModals() {
+  document.querySelectorAll('.modal-overlay').forEach(function(m){ m.classList.remove('visible'); });
+}
+
+function anyModalOpen() {
+  return Array.from(document.querySelectorAll('.modal-overlay')).some(function(m){ return m.classList.contains('visible'); });
+}
+
+// ══════════════════════════════════════════════
+//  TOAST
+// ══════════════════════════════════════════════
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); }, 2800);
+}
+
+// ══════════════════════════════════════════════
+//  RESTART
+// ══════════════════════════════════════════════
+window.restart = function() {
+  stepIndex = 0;
+  selectedOption = null;
+  closeAllModals();
+  document.getElementById('pageBody').classList.remove('dimmed');
+  document.getElementById('usernameInput').value = '';
+  document.getElementById('nextBtn').classList.remove('active');
+  document.getElementById('usernameInput').classList.remove('has-value');
+  document.getElementById('continueBtn').classList.remove('active');
+  document.querySelectorAll('.radio-option').forEach(function(o){ o.classList.remove('selected'); });
+  document.querySelectorAll('input[type=radio]').forEach(function(r){ r.checked = false; });
+  document.getElementById('googleAccountList').style.display = 'block';
+  document.getElementById('googleFpArea').style.display = 'none';
+  document.getElementById('googleConfirmBtn').style.display = 'none';
+  document.getElementById('winFpArea').innerHTML = getFpHTML();
+  renderStepBar();
+  document.querySelectorAll('.sc-btn').forEach(function(b){
+    b.classList.toggle('active', b.getAttribute('data-sc') === scenario);
+  });
+};
+
+// ══════════════════════════════════════════════
+//  OVERLAY CLICK TO CLOSE
+// ══════════════════════════════════════════════
+document.querySelectorAll('.modal-overlay').forEach(function(overlay) {
+  overlay.addEventListener('click', function(e) {
+    if (e.target === overlay) {
+      overlay.classList.remove('visible');
+      if (!anyModalOpen()) {
+        document.getElementById('pageBody').classList.remove('dimmed');
+      }
+    }
+  });
+});
+
+// ══════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════
+resolveEmails();
+renderStepBar();
+</script>
+</body>
+</html>
